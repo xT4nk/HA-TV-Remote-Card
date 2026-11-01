@@ -4,11 +4,16 @@
      Serve the repo root (modules do not load from file://):
        python3 -m http.server   →   http://localhost:8000/examples/preview.html
      Every button press is printed in the box at the bottom instead of reaching a TV. -->
+<!-- The MDI webfont must be loaded at document level: an @font-face declared inside a
+     shadow root is ignored by browsers, so loading it per-icon shows tofu squares. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 <style>body{margin:0;background:#000;color:#ccc;font:13px ui-monospace,monospace;display:flex;flex-wrap:wrap;gap:30px;justify-content:center;padding:30px}
 .f{width:390px;height:844px;overflow:hidden;border-radius:44px;box-shadow:0 0 0 10px #111}
 #log{width:100%;max-width:840px;white-space:pre-wrap;background:#111;border-radius:10px;padding:12px;min-height:60px}</style>
 <script>
-// minimal <ha-icon> shim: draws the MDI icon from the webfont
+// minimal <ha-icon> shim. The webfont needs BOTH: the @font-face registered at
+// document level (the <link> in <head> above), and the .mdi-* class rules present
+// inside the card's shadow DOM (the per-element <link> below) so they reach the span.
 customElements.define('ha-icon', class extends HTMLElement{connectedCallback(){const n=this.getAttribute('icon').replace('mdi:','');
   this.innerHTML=`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css"><span class="mdi mdi-${n}" style="font-size:var(--mdc-icon-size,24px);line-height:1;display:block"></span>`;}});
 </script></head><body>
