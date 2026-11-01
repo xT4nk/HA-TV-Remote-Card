@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Samsung QLED 2024 (tested on QE55QE1DAUXZT) — full setup
+# ─────────────────────────────────────────────────────────────────────────────
+# Integrations used:
+#   - Samsung Smart TV (`samsungtv`)  → media_player.<tv> + remote.<tv>
+#   - SmartThings (optional)          → only for the "Live TV" shortcut
+#
+# 1) configuration.yaml — launch apps through the TV's local REST API
+#    (replace 192.0.2.10 with your TV's IP; give the TV a fixed IP/DHCP lease)
+#
+# rest_command:
+#   samsung_tv_launch_app:
+#     url: "http://192.0.2.10:8001/api/v2/applications/{{ app }}"
+#     method: post
+#     timeout: 8
+#
+# Restart Home Assistant (or reload "REST commands") after adding it.
+
+# 2) The card (a panel view on a phone looks best)
+type: custom:glass-tv-remote-card
+name: TV
+remote: remote.samsung_tv              # entity from the samsungtv integration
+media_player: media_player.samsung_tv  # header state + "wait until on" for shortcuts
+# keys: Samsung KEY_* codes are the defaults, nothing to set here
+shortcuts:
+  - name: Netflix
+    brand: netflix
+    app: "3201907018807"
+  - name: Prime Video
+    brand: prime
+    app: "3201910019365"
+  - name: Disney+
+    brand: disney
+    app: "3201901017640"
+  # KEY_TV / KEY_DTV and the samsungtv "TV" source are ignored by this model;
+  # the SmartThings media_player switches to live TV with source "digital_tv"
+  - name: Live TV
+    icon: mdi:television-classic
+    service: media_player.select_source
+    data:
+      entity_id: media_player.samsung_tv_smartthings
+      source: digital_tv

@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>glass-tv-remote-card · preview</title>
+<!-- Preview outside Home Assistant, with a fake `hass`.
+     Serve the repo root (modules do not load from file://):
+       python3 -m http.server   →   http://localhost:8000/examples/preview.html
+     Every button press is printed in the box at the bottom instead of reaching a TV. -->
+<style>body{margin:0;background:#000;color:#ccc;font:13px ui-monospace,monospace;display:flex;flex-wrap:wrap;gap:30px;justify-content:center;padding:30px}
+.f{width:390px;height:844px;overflow:hidden;border-radius:44px;box-shadow:0 0 0 10px #111}
+#log{width:100%;max-width:840px;white-space:pre-wrap;background:#111;border-radius:10px;padding:12px;min-height:60px}</style>
+<script>
+// minimal <ha-icon> shim: draws the MDI icon from the webfont
+customElements.define('ha-icon', class extends HTMLElement{connectedCallback(){const n=this.getAttribute('icon').replace('mdi:','');
+  this.innerHTML=`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css"><span class="mdi mdi-${n}" style="font-size:var(--mdc-icon-size,24px);line-height:1;display:block"></span>`;}});
+</script></head><body>
+<div class="f" id="a"></div><div class="f" id="b"></div>
+<div id="log">service calls appear here…</div>
+<script type="module">
+import '../glass-tv-remote-card.js';
+const out = document.getElementById('log'), lines = [];
+const config = {
+  name: 'TV', remote: 'remote.tv', media_player: 'media_player.tv',
+  shortcuts: [
+    {name: 'Netflix', brand: 'netflix', app: '3201907018807'},
+    {name: 'Prime Video', brand: 'prime', app: '3201910019365'},
+    {name: 'Disney+', brand: 'disney', app: '3201901017640'},
+    {name: 'Live TV', icon: 'mdi:television-classic', service: 'media_player.select_source',
+     data: {entity_id: 'media_player.tv_smartthings', source: 'digital_tv'}},
+  ],
+};
+const mk = (id, state, numpad) => {
+  const c = document.createElement('glass-tv-remote-card'); c.setConfig(config);
+  const h = {states: {'media_player.tv': {state}}, callService: async (d, s, data) => {
+    lines.unshift(`${id}: ${d}.${s} ${JSON.stringify(data)}`); out.textContent = lines.slice(0, 12).join('\n');
+    if (data.command === 'KEY_POWER') setTimeout(() => { h.states['media_player.tv'] = {state: 'on'}; c.hass = h; }, 1200);
+  }};
+  c.hass = h; document.getElementById(id).append(c);
+  if (numpad) c.shadowRoot.querySelector('.n123').click();
+};
+mk('a', 'on'); mk('b', 'standby', true);
+</script></body></html>
