@@ -205,13 +205,6 @@ shortcuts:
 remote keys, and in its docs for the key names. If the TV has no remote entity at all, `send.service`
 can be a script that receives the key as a field.
 
-## Preview without Home Assistant
-```bash
-python3 -m http.server      # from the repo root
-# open http://localhost:8000/examples/preview.html
-```
-Two phones side by side (TV on / TV in standby with the number pad open); every press is printed
-below instead of reaching a TV.
 
 ## Troubleshooting
 - **Shortcut says "TV off"**: the TV did not reach `on` within 25 s. Check that the power key works from
