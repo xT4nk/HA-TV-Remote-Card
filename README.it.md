@@ -90,11 +90,5 @@ i nomi dei tasti vengono dalla documentazione di HA).
 | Indietro / Home / Esci | `back` / `home` / `exit` | `KEY_RETURN` / `KEY_HOME` / `KEY_EXIT` |
 | Cifre | `num_0` … `num_9` | `KEY_0` … `KEY_9` |
 
-## Anteprima senza Home Assistant
-```bash
-python3 -m http.server      # dalla radice del repo
-# apri http://localhost:8000/examples/preview.html
-```
-
 ## Licenza
 MIT — vedi [LICENSE](LICENSE). I loghi sono marchi dei rispettivi proprietari.
