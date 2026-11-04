@@ -8,7 +8,6 @@ remapped from YAML, so it works with other TVs too (see [Other TVs](#other-tvs))
 
 🇮🇹 [Leggi in italiano](README.it.md)
 
-<!-- Screenshot: open examples/preview.html (see "Preview") and save it as docs/screenshot.png -->
 ![Screenshot](docs/screenshot.png)
 
 ## Features
@@ -21,7 +20,7 @@ remapped from YAML, so it works with other TVs too (see [Other TVs](#other-tvs))
 - Haptic tick on Android (Vibration API).
 
 ## Installation
-**HACS** (custom repository): HACS → ⋮ → *Custom repositories* → this repo URL, type *Dashboard* →
+**HACS** (custom repository): HACS → ⋮ → *Custom repositories* → `https://github.com/xT4nk/HA-TV-Remote-Card`, type *Dashboard* →
 install *Glass TV Remote Card* → reload the browser.
 
 **Manual**: copy `glass-tv-remote-card.js` to `/config/www/`, then *Settings → Dashboards → ⋮ →
@@ -215,4 +214,11 @@ can be a script that receives the key as a field.
 - **App opens nothing**: the app ID is wrong or the app is not installed (`curl` above → 404).
 
 ## License
-MIT — see [LICENSE](LICENSE). Logos are trademarks of their owners.
+Copyright © 2026 xT4nk. Licensed under the **GNU General Public License v3.0 or later** — see
+[LICENSE](LICENSE). You can use, study, change and share the card freely; if you distribute it or a modified
+version, you must do so under the same license, with the source code. Code published before 1.0.0 was under
+the MIT license.
+
+Service logos embedded in the card (Netflix, Prime Video, Disney+) are trademarks of their
+respective owners and are not covered by the license. The Netflix and Prime Video glyphs come from
+[Simple Icons](https://simpleicons.org/) (CC0); the Disney+ glyph from Wikimedia Commons.
