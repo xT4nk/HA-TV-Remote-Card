@@ -22,7 +22,7 @@
 //  useful, but WITHOUT ANY WARRANTY; see the LICENSE file for details.
 // ═════════════════════════════════════════════════════════════════════════
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 // Service logos (monochrome SVG; Netflix and Prime Video from Simple Icons, CC0;
 // Disney+ from Wikimedia Commons), drawn on the brand colour like app icons.
