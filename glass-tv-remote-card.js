@@ -13,6 +13,13 @@
 //  from YAML: see README.md.
 //
 //  At runtime it only uses the `hass` object (no token, no polling).
+//
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//  Copyright © 2026 xT4nk
+//  This program is free software: you can redistribute it and/or modify it under the terms of the
+//  GNU General Public License as published by the Free Software Foundation, either version 3 of the
+//  License, or (at your option) any later version. It is distributed in the hope that it will be
+//  useful, but WITHOUT ANY WARRANTY; see the LICENSE file for details.
 // ═════════════════════════════════════════════════════════════════════════
 
 const VERSION = '1.0.0';
