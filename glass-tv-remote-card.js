@@ -277,9 +277,27 @@ class GlassTvRemoteCard extends HTMLElement {
       const br = typeof a.brand === 'object' ? a.brand : BRAND[a.brand];
       b.className = br ? 'app' : 'app g';
       if(br) b.style.background = br.bg;
-      b.innerHTML = (br
-        ? `<svg viewBox="${br.vb}" style="padding:${br.pad ?? 12}px" fill="${br.fg || '#fff'}" aria-hidden="true">${[].concat(br.d).map(d => `<path d="${d}"/>`).join('')}</svg>`
-        : `<ha-icon icon="${a.icon || 'mdi:application'}"></ha-icon>`) + '<span class="as"></span>';
+      // built with the DOM, not innerHTML: the values come from the YAML and are set as plain attributes
+      if(br){
+        const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('viewBox', String(br.vb || '0 0 24 24'));
+        svg.setAttribute('fill', String(br.fg || '#fff'));
+        svg.setAttribute('aria-hidden', 'true');
+        svg.style.padding = `${Number(br.pad ?? 12) || 0}px`;
+        for(const d of [].concat(br.d || [])){
+          const path = document.createElementNS(NS, 'path');
+          path.setAttribute('d', String(d));
+          svg.append(path);
+        }
+        b.append(svg);
+      } else {
+        const ic = document.createElement('ha-icon');
+        ic.setAttribute('icon', String(a.icon || 'mdi:application'));
+        b.append(ic);
+      }
+      const as = document.createElement('span');
+      as.className = 'as';
+      b.append(as);
       b.setAttribute('aria-label', `Open ${a.name || 'shortcut'}`);
       b.onclick = () => this._launch(a, b);
       apps.append(b);
