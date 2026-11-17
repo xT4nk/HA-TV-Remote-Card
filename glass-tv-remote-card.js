@@ -94,7 +94,7 @@ const CSS = `
   .tc-h .dot.on{background:var(--amber);box-shadow:0 0 8px rgba(255,179,92,.8)}
 
   /* shortcuts: apps and sources */
-  .apps{width:100%;max-width:360px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .apps{width:100%;max-width:360px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;justify-content:center}
   /* the button IS the app icon: rounded square in the brand colour, glass highlight on top */
   .app{position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;display:grid;place-items:center;padding:0;
     box-shadow:0 8px 20px rgba(0,0,0,.35), inset 0 0 0 .5px rgba(255,255,255,.2);transition:transform .12s, filter .2s}
@@ -278,7 +278,8 @@ class GlassTvRemoteCard extends HTMLElement {
 
     const apps = root.querySelector('.apps');
     apps.hidden = !this._shortcuts.length;
-    apps.style.gridTemplateColumns = `repeat(${Math.min(this._shortcuts.length, 4) || 1},1fr)`;
+    // up to 4 per row; with 1-3 the columns keep the icon size instead of blowing it up to the full width
+    apps.style.gridTemplateColumns = `repeat(${Math.min(this._shortcuts.length, 4) || 1},minmax(0,76px))`;
     for(const a of this._shortcuts){
       const b = document.createElement('button');
       // the button is the icon: logo on the brand colour, or an MDI icon on glass
@@ -398,10 +399,16 @@ class GlassTvRemoteCard extends HTMLElement {
 
   _clearLater(btn){ btn._t = setTimeout(() => { btn.classList.remove('busy','err'); const as = btn.querySelector('.as'); if(as) as.textContent = ''; }, 4000); }
 
-  getCardSize(){ return 10; }
+  getCardSize(){ return 15; }
+  getGridOptions(){ return {columns:12, min_columns:9, rows:'auto'}; }
 }
 
-customElements.define('glass-tv-remote-card', GlassTvRemoteCard);
-window.customCards = window.customCards || [];
-window.customCards.push({type:'glass-tv-remote-card', name:'Glass TV Remote', description:'Full-screen phone remote for TVs (Samsung by default, any TV via key mapping).'});
-console.info(`%c GLASS-TV-REMOTE-CARD %c ${VERSION} `, 'background:#ffb35c;color:#2a1606;font-weight:700', 'background:#222;color:#fff');
+// the card may be served from two URLs (/local/ and /hacsfiles/): define it once, or the second load throws
+if(!customElements.get('glass-tv-remote-card')){
+  customElements.define('glass-tv-remote-card', GlassTvRemoteCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({type:'glass-tv-remote-card', name:'Glass TV Remote',
+    description:'Full-screen phone remote for TVs (Samsung by default, any TV via key mapping).',
+    documentationURL:'https://github.com/xT4nk/HA-TV-Remote-Card', preview:false});
+  console.info(`%c GLASS-TV-REMOTE-CARD %c ${VERSION} `, 'background:#ffb35c;color:#2a1606;font-weight:700', 'background:#222;color:#fff');
+}
