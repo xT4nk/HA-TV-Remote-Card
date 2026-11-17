@@ -73,7 +73,8 @@ shortcuts:
 | Option | Default | Description |
 |---|---|---|
 | `remote` | — (required, unless `send.target`) | Entity that receives the keys |
-| `media_player` | none | Shows on/standby in the header; shortcuts wake the TV and wait for `on`. Without it, shortcuts run immediately |
+| `media_player` | none | Shows on/standby in the header; shortcuts wake the TV and wait until it is on (any state but `off`, `standby`, `unavailable`, `unknown`). Without it, shortcuts run immediately |
+| `wake_states` | `[off, standby]` | States of `media_player` from which a shortcut wakes the TV. In any other "not on" state (`unavailable`, `unknown`) the shortcut shows *unavailable* and sends nothing: add `unavailable` here if your TV reports it when it is off |
 | `name` | `TV` | Header title |
 | `keys` | Samsung `KEY_*` | Remap buttons, see below. `null` hides a button |
 | `numpad` | `true` | `false` hides the "123" button |

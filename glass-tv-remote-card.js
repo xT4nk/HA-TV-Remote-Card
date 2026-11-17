@@ -46,6 +46,8 @@ const DEFAULT_KEYS = {
 const ON_WAIT_MS = 25000;   // max wait for the TV to turn on before launching a shortcut
 const APP_SETTLE_MS = 2500; // right after power-on the TV app service answers a bit late
 const OFF_STATES = ['off','standby','unavailable','unknown'];
+// the states a shortcut wakes the TV from (the power key is a toggle: never send it to a TV that may be on)
+const WAKE_STATES = ['off','standby'];
 
 const CSS = `
   /* "Liquid glass": blurred panes with a rim highlight, capsule controls, amber as the only accent.
@@ -220,26 +222,32 @@ class GlassTvRemoteCard extends HTMLElement {
     // how a key is sent: default remote.send_command {entity_id: remote, command: <key>}
     const [dom, svc] = (send.service || 'remote.send_command').split('.');
     this._send = {domain:dom, service:svc, field:send.field || 'command', target:send.target || c.remote, data:send.data || {}};
-    this._shortcuts = Array.isArray(c.shortcuts) ? c.shortcuts : [];
+    if(c.shortcuts !== undefined && !Array.isArray(c.shortcuts))
+      throw new Error('glass-tv-remote-card: `shortcuts` must be a list');
+    // keep only real entries: an empty "- " in YAML is null and would break the build
+    this._shortcuts = (Array.isArray(c.shortcuts) ? c.shortcuts : []).filter(x => x && typeof x === 'object');
     this._appService = c.app_service || 'rest_command.samsung_tv_launch_app';
     this._powerOn = c.power_on || {key:'power'};
-    if(this._built){ this._root.innerHTML = ''; this._built = false; this._build(); this._sync(); }
+    this._wakeStates = Array.isArray(c.wake_states) ? c.wake_states : WAKE_STATES;
+    if(this._built){ this._built = false; this._build(); this._sync(); }
   }
 
   connectedCallback(){
     // draw right away (even before HA passes `hass`) so the card is never empty
-    if(!this._built) this._build();
+    if(!this._built && this._cfg) this._build();
     this._sync();
   }
 
   set hass(hass){
     this._hass = hass;
-    if(!this._built) this._build();
+    if(!this._built && this._cfg) this._build();
     this._sync();
   }
 
   _build(){
     const root = this._root || (this._root = this.attachShadow({mode:'open'}));
+    if(!this._cfg) return;                     // hass or connectedCallback arrived before setConfig
+    root.replaceChildren();                    // never stack a second remote on top of the first
     const style = document.createElement('style'); style.textContent = CSS;
     const wrap = document.createElement('div'); wrap.innerHTML = HTML;
     root.append(style, wrap);
@@ -312,9 +320,9 @@ class GlassTvRemoteCard extends HTMLElement {
     stt.hidden = !this._mediaId;
     if(!this._mediaId) return;
     const m = this._hass.states[this._mediaId];
-    const on = m && !OFF_STATES.includes(m.state);
-    this._root.querySelector('.dot').classList.toggle('on', !!on);
-    this._root.querySelector('.slbl').textContent = !m ? 'unavailable' : (on ? 'on' : 'standby');
+    const on = this._isOn();
+    this._root.querySelector('.dot').classList.toggle('on', on);
+    this._root.querySelector('.slbl').textContent = on ? 'on' : (m && this._wakeStates.includes(m.state) ? 'standby' : 'unavailable');
   }
 
   _sendKey(key){
@@ -328,23 +336,22 @@ class GlassTvRemoteCard extends HTMLElement {
     return this._hass.callService(dom, svc, data || {});
   }
 
-  _isOn(){ return this._hass?.states[this._mediaId]?.state === 'on'; }
+  _state(){ return this._hass?.states[this._mediaId]?.state; }
+  // one rule for the header and the shortcuts: on = any state that is not off (playing, idle, paused… are on)
+  _isOn(){ const s = this._state(); return !!s && !OFF_STATES.includes(s); }
 
   // ── shortcuts: wake the TV if needed, then run the shortcut ──
   async _launch(a, btn){
     if(!this._hass || btn.classList.contains('busy')) return;
     const sub = btn.querySelector('.as');
-    const show = (cls, txt) => { btn.classList.remove('busy','err'); if(cls) btn.classList.add(cls); sub.textContent = txt; };
+    const show = (cls, txt) => { clearTimeout(btn._t); btn.classList.remove('busy','err'); if(cls) btn.classList.add(cls); sub.textContent = txt; };
     if(navigator.vibrate) navigator.vibrate(8);
     try{
       if(this._mediaId && !this._isOn()){
+        // unavailable, unknown or a wrong entity: we cannot tell whether the TV is on, so no power key
+        if(!this._wakeStates.includes(this._state())){ show('err', 'unavailable'); return this._clearLater(btn); }
         show('busy', 'waking…');
-        // Samsung: media_player.turn_on (Wake-on-LAN) does NOT wake the TV from standby, the power key does
-        const p = this._powerOn;
-        if(p.service) await this._call(p.service, {entity_id:this._mediaId, ...(p.data || {})});
-        else await this._sendKey(this._keys[p.key] || p.key);
-        if(!await this._waitOn(ON_WAIT_MS)){ show('err', 'TV off'); return this._clearLater(show); }
-        await new Promise(r => setTimeout(r, APP_SETTLE_MS));
+        if(!await this._wake()){ show('err', 'TV off'); return this._clearLater(btn); }
       }
       show('busy', 'opening…');
       if(a.service) await this._call(a.service, a.data);
@@ -357,8 +364,24 @@ class GlassTvRemoteCard extends HTMLElement {
     }catch(e){
       console.warn('glass-tv-remote-card: shortcut failed', a, e);
       show('err', 'failed');
-      this._clearLater(show);
+      this._clearLater(btn);
     }
+  }
+
+  // one wake for the whole card: a second shortcut tapped while waking joins it instead of sending a second
+  // power key (a toggle) that would switch the TV back off
+  _wake(){
+    if(this._waking) return this._waking;
+    this._waking = (async () => {
+      // Samsung: media_player.turn_on (Wake-on-LAN) does NOT wake the TV from standby, the power key does
+      const p = this._powerOn;
+      if(p.service) await this._call(p.service, {entity_id:this._mediaId, ...(p.data || {})});
+      else await this._sendKey(this._keys[p.key] || p.key);
+      if(!await this._waitOn(ON_WAIT_MS)) return false;
+      await new Promise(r => setTimeout(r, APP_SETTLE_MS));
+      return true;
+    })().finally(() => { this._waking = null; });
+    return this._waking;
   }
 
   _waitOn(ms){
@@ -373,7 +396,7 @@ class GlassTvRemoteCard extends HTMLElement {
     });
   }
 
-  _clearLater(show){ setTimeout(() => show(null, ''), 4000); }
+  _clearLater(btn){ btn._t = setTimeout(() => { btn.classList.remove('busy','err'); const as = btn.querySelector('.as'); if(as) as.textContent = ''; }, 4000); }
 
   getCardSize(){ return 10; }
 }
