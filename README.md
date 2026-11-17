@@ -6,8 +6,6 @@ A full-screen TV remote for your phone, as a [Home Assistant](https://www.home-a
 Built and tested on a **Samsung QLED 2024** (QE55QE1DAUXZT). Every key and shortcut can be
 remapped from YAML, so it works with other TVs too (see [Other TVs](#other-tvs)).
 
-🇮🇹 [Leggi in italiano](README.it.md)
-
 ![Screenshot](docs/screenshot.png)
 
 ## Features
